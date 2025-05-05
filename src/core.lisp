@@ -1,6 +1,6 @@
 (defpackage :turing-machines
   (:use :cl)
-  (:export :main :run_machine))
+  (:export :main :run-machine))
 
 (in-package :turing-machines)
 
@@ -65,7 +65,7 @@
         ;; No rule found: halt
         (values nil tape))))
 
-(defun run_machine (state tape)
+(defun run-machine (state tape)
   (loop 
     do (format t "~%State: ~a" state)
     (print-tape tape)
@@ -78,6 +78,6 @@
 
 (defun main ()
   (let ((initial-tape (make-tape :left '(0 0) :current 1 :right '(0 1 0 1 0))))
-    (multiple-value-bind (final-state final-tape) (run_machine 'start initial-tape)
+    (multiple-value-bind (final-state final-tape) (run-machine 'start initial-tape)
       (format t "~%Final state: ~a" final-state)
       (print-tape final-tape))))
