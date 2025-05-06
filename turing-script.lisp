@@ -80,7 +80,6 @@
               (run-machine ',initial-state tape transitions-table)))))
 
 
-
 (define-turing-machine simple-adder
   (start 1 1 right start)
   (start 0 0 right start)

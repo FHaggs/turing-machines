@@ -5,5 +5,8 @@
 `sbcl --script turing-script.lisp`
 
 ## Set up sbcl
-# Install sbcl
+### Install sbcl
 `sudo apt install sbcl`
+
+## TODO
+Add composable machines. Like building blocks from jflap
