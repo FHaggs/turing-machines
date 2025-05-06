@@ -1,8 +1,3 @@
-(defpackage :turing-machines
-  (:use :cl)
-  (:export :main :run-machine))
-
-(in-package :turing-machines)
 
 (defstruct tape
   left     ;; list 
@@ -105,3 +100,4 @@
 (defun main ()
   (let ((initial-tape (make-tape :left '(0 0) :current 0 :right '(0 1 0 1 1))))
     (run-simple-adder initial-tape)))
+(main)
