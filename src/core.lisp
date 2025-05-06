@@ -17,9 +17,9 @@
 
 (defun move-left (tape)
   (if (null (tape-left tape))
-      ;; If nothing to the left: assume blank '_'
+      ;; If nothing to the left: assume blank 'blank'
       (make-tape :left '()
-                 :current '_
+                 :current 'blank
                  :right (cons (tape-current tape) (tape-right tape)))
       ;; Otherwise: move head left
       (make-tape :left (rest (tape-left tape))
@@ -28,9 +28,9 @@
 
 (defun move-right (tape)
   (if (null (tape-right tape))
-      ;; If nothing to the right: assume blank '_'
+      ;; If nothing to the right: assume blank 'blank'
       (make-tape :left (cons (tape-current tape) (tape-left tape))
-                 :current '_
+                 :current 'blank
                  :right '())
       ;; Otherwise: move head right
       (make-tape :left (cons (tape-current tape) (tape-left tape))
@@ -83,18 +83,21 @@
 (define-turing-machine simple-adder
   (start 1 1 right start)
   (start 0 0 right start)
-  (start _ _ left carry)
-  (carry 0 1 right final)
-  (carry _ 1 right  final)
-  (carry 1 0 left carry))
+  (start blank blank left carry)
+  (carry 0 1 right clean-up)
+  (carry blank 1 right  clean-up)
+  (carry 1 0 left carry)
+  (clean-up 1 1 left clean-up)
+  (clean-up 0 0 left clean-up)
+  (clean-up blank blank right final))
 
 (define-turing-machine another-machine
   (q1 a b right q2)
   (q2 b a left  q1)
-  (q2 _ _ right halt))
+  (q2 blank blank right halt))
 
 (defun main ()
-  (let ((initial-tape (make-tape :left '(0 0) :current 1 :right '(0 1 0 1 1))))
+  (let ((initial-tape (make-tape :left '(0 0) :current 0 :right '(0 1 0 1 1))))
     (multiple-value-bind (final-state final-tape)
         (run-machine 'start initial-tape *simple-adder-transitions*)
       (format t "~%Final state (simple-adder): ~a" final-state)
