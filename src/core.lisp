@@ -71,13 +71,15 @@
 
 
 (defmacro define-turing-machine (name &body transitions)
-  `(defparameter ,(intern (format nil "*~a-TRANSITIONS*" (string-upcase name)))
-     (let ((table (make-hash-table :test #'equal)))
-       (dolist (transition ',transitions table)
-         (destructuring-bind (current-state current-symbol next-symbol direction next-state) transition
-           (setf (gethash (list current-state current-symbol) table)
-                 (list next-symbol direction next-state)))))))
-
+  (let* ((sym-name (string-upcase (symbol-name name)))
+         (run-fn (intern (format nil "RUN-~A" sym-name)))
+         (initial-state (first (first transitions))))
+    `(defun ,run-fn (tape) 
+        (let ((transitions-table (make-hash-table :test #'equal)))
+          ,@(loop for (current-state current-symbol new-symbol direction new-state) in transitions
+            collect `(setf (gethash (list ',current-state ',current-symbol) transitions-table)
+              (list ',new-symbol ',direction ', new-state)))
+              (run-machine ',initial-state tape transitions-table)))))
 
 
 (define-turing-machine simple-adder
@@ -98,7 +100,4 @@
 
 (defun main ()
   (let ((initial-tape (make-tape :left '(0 0) :current 0 :right '(0 1 0 1 1))))
-    (multiple-value-bind (final-state final-tape)
-        (run-machine 'start initial-tape *simple-adder-transitions*)
-      (format t "~%Final state (simple-adder): ~a" final-state)
-      (print-tape final-tape))))
+    (run-simple-adder initial-tape)))
