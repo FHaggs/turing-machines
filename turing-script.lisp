@@ -1,6 +1,5 @@
-
 (defstruct tape
-  left     ;; list 
+  left     ;; list
   current  ;; symbol under head
   right)   ;; list
 
@@ -29,7 +28,8 @@
                  :right '())
       ;; Otherwise: move head right
       (make-tape :left (cons (tape-current tape) (tape-left tape))
-                 :current (first (tape-right tape))
+
+      :current (first (tape-right tape))
                  :right (rest (tape-right tape)))))
 
 ;; Key: (current-state current-symbol)
@@ -66,19 +66,50 @@
 
 
 (defmacro define-turing-machine (name &body transitions)
-  "Defines a Turing machine with the given name and transitions. 
+  "Defines a Turing machine with the given name and transitions.
   The inital state is the state of the first transition.
    Creates a function named RUN-NAME to run the machine."
   (let* ((sym-name (string-upcase (symbol-name name)))
          (run-fn (intern (format nil "RUN-~A" sym-name)))
          (initial-state (first (first transitions))))
-    `(defun ,run-fn (tape) 
+    `(defun ,run-fn (tape)
         (let ((transitions-table (make-hash-table :test #'equal)))
           ,@(loop for (current-state current-symbol new-symbol direction new-state) in transitions
             collect `(setf (gethash (list ',current-state ',current-symbol) transitions-table)
               (list ',new-symbol ',direction ', new-state)))
               (run-machine ',initial-state tape transitions-table)))))
 
+
+; (machine sym other-machine)
+; (defmacro define-composable-machine (name &body transitions)
+  ; (let* ((syn-name (string-upcase (symbol-name name)))
+         ; (run-fn (intern (format nil "RUN-~A" syn-name)))
+         ; (inital-machine (first (first transitions))))
+    ; `(defun ,run-fn (tape)
+       ; (let ((transitions-table (make-hash-table :test #'equal)))
+         ; ,@(loop for (current-machine current-symbol next-machine) in transitions
+                 ; collect `(setf (gethash (list ',current-machine ',current-symbol) transitions-table)
+                                ; (#',next-machine)))
+         ; (run-composed-machine #',inital-machine tape transitions-table)))))
+;
+
+(defvar *function-map* nil
+  "A global hash table mapping (machine-symbol, input-symbol) pairs to machine-symbols.")
+
+(defun initialize-function-map ()
+  (setf *function-map* (make-hash-table :test #'equal)) ; 'equal' to match list keys
+  (setf (gethash (list 'run-simple-adder 0) *function-map*) 'run-simple-adder)
+  (setf (gethash (list 'run-simple-adder 1) *function-map*) 'run-another-machine))
+
+(defun run-composed-machine (initial-machine-symbol tape transitions-table)
+  ;; Run the machine and capture the resulting tape
+  (multiple-value-bind (final-state new-tape)
+      (funcall (symbol-function initial-machine-symbol) tape)
+    (print final-state)
+    (let* ((symbol (tape-current new-tape))
+           (new-machine-symbol (gethash (list initial-machine-symbol symbol) transitions-table)))
+      (when new-machine-symbol
+        (run-composed-machine new-machine-symbol new-tape transitions-table)))))
 
 (define-turing-machine simple-adder
   (start 1 1 right start)
@@ -92,11 +123,15 @@
   (clean-up blank blank right final))
 
 (define-turing-machine another-machine
-  (q1 a b right q2)
-  (q2 b a left  q1)
-  (q2 blank blank right halt))
+  (q1 0 0 right halt)
+  (q2 1 1 right  halt))
 
+; (define-composable-machine big-m
+  ; (run-simple-adder 0 run-simple-adder)
+  ; (run-simple-adder 1 run-another-machine))
+;
 (defun main ()
+  (initialize-function-map)
   (let ((initial-tape (make-tape :left '(0 0) :current 0 :right '(0 1 0 1 1))))
-    (run-simple-adder initial-tape)))
+    (run-composed-machine 'run-simple-adder initial-tape *function-map*)))
 (main)
